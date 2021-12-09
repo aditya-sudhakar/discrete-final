@@ -4,7 +4,7 @@
 #
 # Date: December 2021
 # 
-# Contributors: Aditya Sudhakar, Lila Smith, Dasha Chadiyuk
+# Contributors: Aditya Sudhakar, Lila Smith, Dasha Chadiuk
 # 
 # Description: 
 #
@@ -13,6 +13,26 @@
 
 ##### IMPORTS #####
 import math
+
+##### CLASSES #####
+class Resistor: 
+    def __init__(self, name, p1_net, p2_net, x, y, theta, size):
+        self.name = name        #Component Name, ex: R13, R21, etc.
+        self.p1_net = p1_net    #Pad 1 net name, ex: GND
+        self.p2_net = p2_net    #Pad 2 net name, ex: GND
+        self.loc = [x,y,theta]  #Location of resistor [x-coord, y-coord, rotation]
+        self.size = size        #size of resistor, ex: 0805, 0402, etc.
+        self.p1_coord = []
+        self.p2_coord = []
+
+    def update_location(self,new_x, new_y, new_theta):
+        self.loc = [new_x, new_y, new_theta]
+        print(f"Location of {self.name} updated to {self.loc}")
+
+    def calculate_pad_coords(self):
+        
+
+    
 
 
 
