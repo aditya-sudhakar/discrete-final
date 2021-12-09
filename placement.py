@@ -6,16 +6,18 @@
 # 
 # Contributors: Aditya Sudhakar, Lila Smith, Dasha Chadiyuk
 # 
-# Emails:
-# 
-# Remarks, if any:
-#
-#
+# Description: 
 #
 #
 ######################################################################
 
+##### IMPORTS #####
+import math
 
+
+
+
+##### FUNCTIONS #####
 
 def consume_circuit():
     #TODO IMPLEMENT
@@ -24,14 +26,15 @@ def consume_circuit():
 def generate_netlist_dict():
     #TODO IMPLEMENT
     pass
+    return netlist_dict, num_verticies, num_edges
 
 def generate_layout_grid():
     #TODO IMPLEMENT
     pass
 
-def calculate_minimum_crossings():
-    #TODO IMPLEMENT
-    pass
+def calculate_min_thickness(vertices, edges):
+    min_thickness = math.ceil(edges/(3*vertices-6))
+    return min_thickness
 
 def squish():
     #TODO IMPLEMENT
