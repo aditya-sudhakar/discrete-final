@@ -26,9 +26,27 @@ def consume_circuit():
 def generate_netlist_dict():
     #TODO IMPLEMENT
     pass
-    return netlist_dict, num_verticies, num_edges
+    return netlist_dict, num_verticies, num_edges, num_components, most_verticies_single
 
-def generate_layout_grid():
+def component_list_of_nets():
+    #TODO IMPLEMENT
+    pass
+
+def calculate_grid_len(num_components, most_verticies_single):
+    #TODO IMPLEMENT
+    max_grid_len = (math.ceil(math.sqrt(num_components))+1)**2
+
+    while_cond = (max_grid_len-1)**2
+    while while_cond < most_verticies_single/2:
+        max_grid_len += 1
+        while_cond = (max_grid_len-1)**2
+
+    if max_grid_len%2 == 0:
+        max_grid_len += 1
+
+    return max_grid_len
+    
+def generate_grid(grid_len):
     #TODO IMPLEMENT
     pass
 
@@ -37,6 +55,10 @@ def calculate_min_thickness(vertices, edges):
     return min_thickness
 
 def squish():
+    #TODO IMPLEMENT
+    pass
+
+def pick_next_component():
     #TODO IMPLEMENT
     pass
 
