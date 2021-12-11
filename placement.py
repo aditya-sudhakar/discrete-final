@@ -12,7 +12,7 @@
 ######################################################################
 
 ##### FILEPATH ######
-mypath = './auto-placement_project/auto-placement_project.kicad_pcb'
+mypath = './auto-placement_project/test.kicad_pcb'
 text_file = open(mypath, "r")
 data = text_file.read()
 text_file.close()
@@ -44,15 +44,18 @@ class Resistor:
 
 def consume_circuit(read_data):
     circuit_dict = {}
+    num_nets, num_pins, most_pins_single = 0, 0, 0
     splits = read_data.split('(footprint')
+    general = ''
 
     for split in splits:
         if "general" in split:
-            pass
+            num_nets = split.count('(net') - 1
+            general = split
         else:
             comp_name = find_refdes(split)
-            # circuit_dict[comp_name] = {"data":split}
-            circuit_dict[comp_name] = {"data":0}
+            circuit_dict[comp_name] = {"data":'(footprint' + split}
+            # circuit_dict[comp_name] = {"data":0}
 
             netlist, total_pins, pins_dict = nets_on_component(split)
             circuit_dict[comp_name]['netlist'] = netlist
@@ -62,22 +65,19 @@ def consume_circuit(read_data):
             loc_str, x_coord, y_coord, theta = get_componet_location(split)
             circuit_dict[comp_name]['location'] = [loc_str, x_coord, y_coord, theta]
 
-    
+            num_pins += total_pins
+            if total_pins > most_pins_single:
+                most_pins_single = total_pins
+
+    num_components = len(circuit_dict)
     # print(circuit_dict)
+
+    print(f"There are {num_nets} unique nets and {num_pins} unique pins shared among {num_components} components in this circuit.")
     
-    return circuit_dict
-
-def generate_netlist_dict():
-    #TODO IMPLEMENT
-    pass
-    return netlist_dict, num_verticies, num_edges, num_components, most_verticies_single
-
-def component_list_of_nets():
-    #TODO IMPLEMENT
-    pass
+    return circuit_dict, num_nets, num_pins, num_components, most_pins_single, general
 
 def calculate_grid_len(num_components, most_verticies_single):
-    #TODO IMPLEMENT
+
     max_grid_len = (math.ceil(math.sqrt(num_components))+1)**2
 
     while_cond = (max_grid_len-1)**2
@@ -88,6 +88,8 @@ def calculate_grid_len(num_components, most_verticies_single):
     if max_grid_len%2 == 0:
         max_grid_len += 1
 
+    print(f"The layout shall contain {max_grid_len} by {max_grid_len} slots.")
+
     return max_grid_len
     
 def generate_grid(grid_len):
@@ -96,11 +98,42 @@ def generate_grid(grid_len):
 
 def calculate_min_thickness(vertices, edges):
     min_thickness = math.ceil(edges/(3*vertices-6))
+
+    print(f"The minimum possible thickness for this graph is {min_thickness}.")
+    print(f"A solution exists such that a complete PCB layout can achieved in {min_thickness-1} layers. ")
+    
     return min_thickness
 
-def squish():
-    #TODO IMPLEMENT
-    pass
+def squish(circuit_dict, general):
+
+    f = open(mypath, 'w')
+    f.truncate(0)
+    f.write(general)
+    
+    for component in circuit_dict:
+
+        f.write('\n')
+
+        circuit_dict[component]['location'][1] = 0
+        circuit_dict[component]['location'][2] = 0
+        circuit_dict[component]['location'][3] = 0
+
+        circuit_dict[component]['location'][0] = f"(at {circuit_dict[component]['location'][1]} {circuit_dict[component]['location'][2]})"
+        
+        new_loc = circuit_dict[component]['location'][0]
+
+        start_index = circuit_dict[component]['data'].find('(at')
+        stop_index = circuit_dict[component]['data'].find(')', start_index) + 1 
+        new_data = circuit_dict[component]['data'][:start_index] + new_loc + circuit_dict[component]['data'][stop_index:]
+       
+        print(f"Component {component} moved to {new_loc}.")
+
+        circuit_dict[component]['data'] = new_data
+        f.write(circuit_dict[component]['data'])
+    
+    f.close()
+    print('PCB file updated.')
+
 
 def pick_next_component():
     #TODO IMPLEMENT
@@ -121,13 +154,13 @@ def get_componet_location(component_string):
     x_coord, y_coord, theta = 0,0,0
     start_index = component_string.find('(at')
     stop_index = component_string.find(')', start_index) + 1 
-    location_str = component_string[start_index:stop_index]
+    location_str = component_string[start_index+1:stop_index-1]
 
     loc_splits = location_str.split(" ")
-    x_coord = loc_splits[1]
-    y_coord = loc_splits[2]
+    x_coord = float(loc_splits[1])
+    y_coord = float(loc_splits[2])
     if len(loc_splits) == 4:
-        theta = loc_splits[3]
+        theta = float(loc_splits[3])
     
     return location_str, x_coord, y_coord, theta
         
@@ -163,6 +196,21 @@ def nets_on_component(component_string):
         
     return nets_list, total_pins, pin_dict
 
+def calculate_edges_verticies(pins, nets):
+    num_verticies = pins
+    num_edges = pins-nets
+
+    print(f"There shall be {num_edges} edges connecting {num_verticies} verticies in the target graph.")
+
+    return num_edges, num_verticies
 
 
-consume_circuit(data)
+if __name__ == "__main__":
+    circuit_dict, num_nets, num_pins, num_components, most_pins_single, general = consume_circuit(data)
+    
+    num_edges, num_verticies = calculate_edges_verticies(num_pins, num_nets)
+    min_thickness = calculate_min_thickness(num_verticies, num_edges)
+
+    max_grid_len = calculate_grid_len(num_components, most_pins_single)
+
+    squish(circuit_dict, general)
