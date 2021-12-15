@@ -26,6 +26,8 @@ import sympy
 ##### FUNCTIONS #####
 
 def consume_circuit(read_data):
+    # Turn kicad pcb into python-usable format
+
     circuit_dict = {}
     num_nets, num_pins, most_pins_single = 0, 0, 0
     splits = read_data.split('(footprint')
@@ -60,7 +62,7 @@ def consume_circuit(read_data):
     return circuit_dict, num_nets, num_pins, num_components, most_pins_single, general
 
 def calculate_grid_len(num_components, most_verticies_single):
-    #TODO NEEDS WORK!!!
+    # Determine necessary grid size for optimzing placements
 
     max_grid_len = (math.ceil(math.sqrt(num_components))+1)**2
     # print(max_grid_len)
@@ -96,6 +98,8 @@ def generate_grid(grid_len):
     return grid
 
 def calculate_min_thickness(vertices, edges):
+    # calculate minimum layers number (derived from thickness)
+    
     min_thickness = math.ceil(edges/(3*vertices-6))
 
     print(f"The minimum possible thickness for this graph is {min_thickness}.")
@@ -104,6 +108,8 @@ def calculate_min_thickness(vertices, edges):
     return min_thickness
 
 def squish(circuit_dict, general):
+    # Place all components in a corner of the layout to keep things tidy
+
 
     f = open(mypath, 'w')
     f.truncate(0)
@@ -135,6 +141,8 @@ def squish(circuit_dict, general):
     print('PCB file updated.')
 
 def update_location(circuit_dict, component, x_coord, y_coord):
+    # Send placement info to kicad pcb file for updating
+   
     f = open(mypath, 'w')
     f.truncate(0)
     f.write(general)
@@ -163,6 +171,10 @@ def update_location(circuit_dict, component, x_coord, y_coord):
     return
 
 def pick_next_component(circuit, placed_nets, placed_components, components_unused):
+    
+    # Currently chooses the next chronological component. Ultimately needs to
+    # pick the next most optimal componant (based on what's placed)
+
     next_component = None
 
     temp_max_nets = 0
@@ -170,9 +182,6 @@ def pick_next_component(circuit, placed_nets, placed_components, components_unus
         if circuit[component]['total_pins'] > temp_max_nets:
             temp_max_nets = circuit[component]['total_pins']
             next_component = component
-
-    ### NEED TO ADD SOMETHING TO PLACE BASED ON NETS ON LAYOUT ALREADY
-    ### NEED TO STATEHOLD COMPONENTS PLACED/NOT PLACED
 
     if next_component == None:
         pass
@@ -188,7 +197,7 @@ def pick_next_component(circuit, placed_nets, placed_components, components_unus
     return next_component, placed_nets, placed_components, components_unused
 
 def place_next_component(grid, circuit_dict, next_component, placed_components, center_coord):
-    #TODO IMPLEMENT
+    # Place the desired component at the most optimal place
 
     x_coordinate = 0
     y_coordinate = 0
@@ -400,30 +409,31 @@ def calculate_num_crossings():
 
 
 if __name__ == "__main__":
+    
+    ### SETUP PHASE
+
     circuit_dict, num_nets, num_pins, num_components, most_pins_single, general = consume_circuit(data)
     
-    # num_edges, num_verticies = calculate_edges_verticies(num_pins, num_nets)
-    # min_thickness = calculate_min_thickness(num_verticies, num_edges)
+    num_edges, num_verticies = calculate_edges_verticies(num_pins, num_nets)
+    min_thickness = calculate_min_thickness(num_verticies, num_edges)
 
-    # max_grid_len = calculate_grid_len(num_components, most_pins_single)
+    max_grid_len = calculate_grid_len(num_components, most_pins_single)
 
     netlist_dict = {}
     segments = []
 
-    max_grid_len = 7
     grid = generate_grid(max_grid_len)
-
     get_grid_center(grid, max_grid_len)
-
     squish(circuit_dict, general)
 
     placed_nets = []
     components_unused = list(circuit_dict.keys())
     components_unused.sort()
     placed_components = []
-
     center_coord = get_grid_center(grid,max_grid_len)
 
+
+    ### LOOP/PLACE PHASE
 
     while len(components_unused) > 0:
         next_component, placed_nets, placed_components, components_unused = pick_next_component(circuit_dict, placed_nets, placed_components, components_unused)
