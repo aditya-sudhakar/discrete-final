@@ -411,25 +411,24 @@ def calculate_num_crossings():
 if __name__ == "__main__":
     
     ### SETUP PHASE
-
-    circuit_dict, num_nets, num_pins, num_components, most_pins_single, general = consume_circuit(data)
     
+    ### Interpret kicad files
+    circuit_dict, num_nets, num_pins, num_components, most_pins_single, general = consume_circuit(data)
+    netlist_dict, segments = {}, []
+
+    ### Convert from circuit-land into graph-land
     num_edges, num_verticies = calculate_edges_verticies(num_pins, num_nets)
     min_thickness = calculate_min_thickness(num_verticies, num_edges)
 
+    ### Setup the grid for component placement
     max_grid_len = calculate_grid_len(num_components, most_pins_single)
-
-    netlist_dict = {}
-    segments = []
-
     grid = generate_grid(max_grid_len)
-    get_grid_center(grid, max_grid_len)
     squish(circuit_dict, general)
 
-    placed_nets = []
+    ### Setup tracking mechanism for stuff that's been placed/not placed 
+    placed_nets, placed_components = [], []
     components_unused = list(circuit_dict.keys())
     components_unused.sort()
-    placed_components = []
     center_coord = get_grid_center(grid,max_grid_len)
 
 
